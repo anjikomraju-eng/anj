@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced AI Phishing Detection System</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body{
+    height:100vh;
+    background: linear-gradient(-45deg,#0f2027,#203a43,#2c5364,#000000);
+    background-size: 400% 400%;
+    animation: gradientBG 12s ease infinite;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:white;
+}
+
+@keyframes gradientBG {
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+
+.container{
+    width:95%;
+    max-width:950px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(15px);
+    padding:40px;
+    border-radius:20px;
+    box-shadow: 0 0 40px rgba(0,255,255,0.3);
+}
+
+h1{
+    text-align:center;
+    font-family:'Orbitron', sans-serif;
+    margin-bottom:30px;
+    color:#00f7ff;
+}
+
+.scan-box{
+    display:flex;
+    gap:10px;
+    margin-bottom:25px;
+}
+
+input{
+    flex:1;
+    padding:12px;
+    border-radius:8px;
+    border:none;
+    font-size:16px;
+}
+
+button{
+    padding:12px 25px;
+    border:none;
+    border-radius:8px;
+    background:#00f7ff;
+    color:black;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.result-box{
+    margin-top:20px;
+    padding:20px;
+    border-radius:12px;
+    background: rgba(0,0,0,0.6);
+    display:none;
+}
+
+.safe{ color:#00ff9d; }
+.danger{ color:#ff4d4d; }
+
+.progress-bar{
+    width:100%;
+    background:#333;
+    border-radius:10px;
+    overflow:hidden;
+    margin-bottom:10px;
+}
+
+.progress{
+    height:15px;
+    width:0%;
+    transition:0.5s;
+}
+
+.alert-box{
+    margin-top:15px;
+    padding:10px;
+    background:#ff000033;
+    border-left:4px solid red;
+    border-radius:5px;
+    display:none;
+}
+
+.history{
+    margin-top:20px;
+    max-height:150px;
+    overflow:auto;
+    font-size:14px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🔐 Advanced AI Phishing Detection</h1>
+
+<div class="scan-box">
+    <input type="text" id="urlInput" placeholder="Enter suspicious URL...">
+    <button onclick="analyzeURL()">Scan</button>
+</div>
+
+<div class="result-box" id="resultBox">
+
+    <h2 id="resultText"></h2>
+
+    <p>⚠ Risk Score: <span id="riskScore"></span>%</p>
+    <div class="progress-bar">
+        <div class="progress" id="riskBar" style="background:red;"></div>
+    </div>
+
+    <p>📊 AI Confidence: <span id="confidenceScore"></span>%</p>
+    <div class="progress-bar">
+        <div class="progress" id="confidenceBar" style="background:cyan;"></div>
+    </div>
+
+    <div class="alert-box" id="alertBox">
+        🚨 Blacklisted URL detected!
+    </div>
+
+    <!-- NEW DISPLAY -->
+    <div id="riskTypeBox"></div>
+    <div id="reasonBox"></div>
+    <div id="analysisBox"></div>
+
+</div>
+
+<div class="history">
+    <strong>Scan History:</strong>
+    <ul id="historyList"></ul>
+</div>
+
+</div>
+
+<script>
+
+const blacklist = ["phishy.com","fakebank.net","malicious-login.com"];
+
+function analyzeURL(){
+
+    let url = document.getElementById("urlInput").value.trim().toLowerCase();
+    if(url === "") return alert("Enter URL");
+
+    let risk = 0;
+    let reasons = [];
+    let riskType = "Safe";
+    let platformRisk = "General Safe";
+
+    // BASIC CHECKS
+    if(url.length > 75){
+        risk += 15;
+        reasons.push("Long URL");
+    }
+
+    if(url.includes("@")){
+        risk += 20;
+        reasons.push("Contains @ symbol");
+        riskType = "URL Obfuscation";
+    }
+
+    if(/\d+\.\d+\.\d+\.\d+/.test(url)){
+        risk += 20;
+        reasons.push("IP address used");
+        riskType = "Suspicious Domain";
+    }
+
+    if(/login|verify|bank|secure|update/i.test(url)){
+        risk += 20;
+        reasons.push("Sensitive keywords");
+        riskType = "Credential Phishing";
+    }
+
+    if(!url.startsWith("https")){
+        risk += 15;
+        reasons.push("No HTTPS");
+        riskType = "Network Risk";
+    }
+
+    // FILE THREATS
+    if(/\.(exe|zip|rar|apk|bat|msi)$/i.test(url)){
+        risk += 25;
+        reasons.push("Suspicious downloadable file");
+        riskType = "Malware Distribution";
+
+        if(url.includes(".apk")){
+            platformRisk = "Android Device Risk";
+        }
+        else if(url.includes(".exe") || url.includes(".msi")){
+            platformRisk = "Windows System Risk";
+        }
+        else{
+            platformRisk = "File-based Threat";
+        }
+    }
+
+    // MOBILE RISKS
+    if(url.includes("android") || url.includes("apk")){
+        risk += 15;
+        platformRisk = "Android Threat";
+    }
+
+    if(url.includes("ios") || url.includes("iphone") || url.includes("icloud")){
+        risk += 15;
+        platformRisk = "iOS Threat";
+    }
+
+    // BLACKLIST
+    let threat = blacklist.some(b => url.includes(b));
+    if(threat){
+        risk = 100;
+        riskType = "Blacklisted Threat";
+        platformRisk = "Critical Risk (All Devices)";
+        reasons.push("Blacklisted URL");
+    }
+
+    let prediction = risk >= 50 ? "Phishing / Malicious" : "Safe Website";
+    let confidence = Math.min(95, 60 + risk/2);
+
+    document.getElementById("resultBox").style.display="block";
+
+    let result = document.getElementById("resultText");
+    result.innerText = prediction;
+    result.className = risk>=50?"danger":"safe";
+
+    document.getElementById("riskScore").innerText = risk;
+    document.getElementById("confidenceScore").innerText = Math.floor(confidence);
+
+    document.getElementById("riskBar").style.width = risk+"%";
+    document.getElementById("confidenceBar").style.width = confidence+"%";
+
+    document.getElementById("alertBox").style.display = threat?"block":"none";
+
+    document.getElementById("riskTypeBox").innerHTML =
+        "<b>Risk Category:</b> " + riskType +
+        "<br><b>Platform Impact:</b> " + platformRisk;
+
+    document.getElementById("reasonBox").innerHTML =
+        "<b>Reasons:</b><br>" + reasons.map(r=>"• "+r).join("<br>");
+
+    document.getElementById("analysisBox").innerHTML =
+        "<b>Technical Analysis:</b><br>" +
+        "Protocol: " + (url.startsWith("https")?"HTTPS":"HTTP") + "<br>" +
+        "Length: " + url.length + "<br>" +
+        "Device Risk: " + platformRisk;
+
+    let li = document.createElement("li");
+    li.innerText = url + " → " + prediction + " [" + platformRisk + "]";
+    document.getElementById("historyList").appendChild(li);
+
+}
+
+</script>
+
+</body>
+</html>
